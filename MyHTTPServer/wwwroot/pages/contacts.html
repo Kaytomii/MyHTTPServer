@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Контакты — GameStore</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e1e2f, #2d2d44);
+            color: #fff;
+        }
+
+        header {
+            background: #111122;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+            header h1 {
+                margin: 0;
+                font-size: 32px;
+                letter-spacing: 2px;
+                color: #6ab0ff;
+            }
+
+        nav {
+            margin-top: 10px;
+        }
+
+            nav a {
+                color: #cfd8ff;
+                text-decoration: none;
+                margin: 0 15px;
+                font-size: 18px;
+                transition: 0.3s;
+            }
+
+                nav a:hover {
+                    color: #6ab0ff;
+                    text-shadow: 0 0 10px #6ab0ff;
+                }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            margin-top: 80px;
+        }
+
+        .card {
+            background: #2a2a3d;
+            padding: 30px 40px;
+            border-radius: 12px;
+            text-align: center;
+            width: 500px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+            }
+
+            .card h2 {
+                margin-top: 0;
+                color: #6ab0ff;
+                font-size: 28px;
+            }
+
+        .info {
+            font-size: 18px;
+            color: #d6d6e8;
+            line-height: 1.7;
+            margin-top: 20px;
+        }
+
+            .info b {
+                color: #6ab0ff;
+            }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>GameStore</h1>
+        <nav>
+            <a href="#">Главная</a>
+            <a href="about">О нас</a>
+            <a href="contacts">Контакты</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2>Контакты</h2>
+
+            <div class="info">
+                <p><b>Email:</b> support@gamestore.com</p>
+                <p><b>Телефон:</b> +888 888 888 888</p>
+                <p><b>Адрес:</b>Не знаю</p>
+                <p><b>Время работы:</b> 10:00 — 22:00</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Zone</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Segoe UI;
+            background: #0f172a;
+            color: white;
+        }
+
+        header {
+            padding: 20px;
+            background: #020617;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        nav a {
+            color: white;
+            margin-left: 15px;
+            text-decoration: none;
+        }
+
+            nav a:hover {
+                color: #38bdf8;
+            }
+
+        section {
+            padding: 40px;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        h1, h2 {
+            color: #38bdf8;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Student Zone</h1>
+        <nav>
+            <a href="/">Главная</a>
+            <a href="/about">О нас</a>
+            <a href="/contacts">Контакты</a>
+            <a href="/student">Students</a>
+        </nav>
+    </header>
+    <section>
+        <div class="card">
+            <h2>Данные системы</h2>
+            {{content}}
+        </div>
+    </section>
+</body>
+</html>
