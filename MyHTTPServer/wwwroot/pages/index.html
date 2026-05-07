@@ -1,102 +1,29 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>GameStore</title>
+<div class="card">
+    <img src="/images/banner.jpg" class="page-image">
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1e1e2f, #2d2d44);
-            color: #fff;
-        }
+    <h2>Добро пожаловать!</h2>
+    <p>Лучший магазин игр с крутым дизайном</p>
 
-        header {
-            background: #111122;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-        }
+    <form action="/" method="post">
 
-            header h1 {
-                margin: 0;
-                font-size: 32px;
-                letter-spacing: 2px;
-                color: #6ab0ff;
-            }
+        <label>Login:</label><br>
+        <input type="text" name="login"><br><br>
 
-        nav {
-            margin-top: 10px;
-        }
+        <label>Password:</label><br>
+        <input type="password" name="password"><br><br>
 
-            nav a {
-                color: #cfd8ff;
-                text-decoration: none;
-                margin: 0 15px;
-                font-size: 18px;
-                transition: 0.3s;
-            }
+        <label>Repeat Password:</label><br>
+        <input type="password" name="repeat_password"><br><br>
 
-                nav a:hover {
-                    color: #6ab0ff;
-                    text-shadow: 0 0 10px #6ab0ff;
-                }
+        <label>Стать:</label><br>
+        <input type="radio" name="gender" value="female"> Female
+        <input type="radio" name="gender" value="male"> Male
+        <br><br>
 
-        .container {
-            display: flex;
-            justify-content: center;
-            margin-top: 80px;
-        }
+        <input type="checkbox" name="agree"> Згоден
+        <br><br>
 
-        .card {
-            background: #2a2a3d;
-            padding: 30px 40px;
-            border-radius: 12px;
-            text-align: center;
-            width: 400px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-            transition: transform 0.3s;
-        }
+        <input type="submit" value="Send">
 
-            .card:hover {
-                transform: translateY(-5px);
-            }
-
-            .card h2 {
-                margin-top: 0;
-                color: #6ab0ff;
-                font-size: 28px;
-            }
-
-            .card p {
-                font-size: 18px;
-                color: #d6d6e8;
-            }
-    </style>
-</head>
-<body>
-
-    <header>
-        <h1>GameStore</h1>
-        <nav>
-            <a href="#">Главная</a>
-            <a href="about">О нас</a>
-            <a href="contact">Контакты</a>
-        </nav>
-    </header>
-
-    <div class="container">
-        <form action="/" method="get">
-            <input type="text" name="login"/>>
-            <input type="password" name="pwd"/>>
-            <input type="submit" name="name" value="Send" />>
-        </form>
-        <div class="card">
-            <h2>Добро пожаловать!</h2>
-            <p>Лучший магазин игр с крутым дизайном</p>
-        </div>
-    </div>
-
-</body>
-</html>
+    </form>
+</div>

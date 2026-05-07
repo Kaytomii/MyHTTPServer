@@ -5,6 +5,7 @@ using System.Net;
 using System.Text.Json;
 using System.Linq;
 using System.IO;
+using System.Web;
 
 namespace MyHTTPServer;
 
@@ -68,6 +69,30 @@ internal class Server
                     string param = req.Url?.AbsolutePath ?? "/";
                     string responseHtml = "";
 
+                    if (req.Url.AbsolutePath.StartsWith("/styles/"))
+                    {
+                        string fileName = req.Url.AbsolutePath.Replace("/styles/", "");
+                        string fullPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "styles", fileName);
+
+                        if (File.Exists(fullPath))
+                        {
+                            byte[] cssBytes = await File.ReadAllBytesAsync(fullPath);
+
+                            res.ContentType = "text/css";
+                            res.ContentLength64 = cssBytes.Length;
+
+                            await res.OutputStream.WriteAsync(cssBytes, 0, cssBytes.Length);
+                            res.Close();
+                            continue;
+                        }
+                        else
+                        {
+                            res.StatusCode = 404;
+                            res.Close();
+                            continue;
+                        }
+                    }
+
                     if (param.StartsWith("/student"))
                     {
                         var parts = param.Split('/', StringSplitOptions.RemoveEmptyEntries);
@@ -109,6 +134,7 @@ internal class Server
                         string layout = await File.ReadAllTextAsync(layoutPath);
                         responseHtml = layout.Replace("{{content}}", responseHtml);
                     }
+
                     else
                     {
                         string page = GetPageName(param);
@@ -116,11 +142,104 @@ internal class Server
                         responseHtml = await File.ReadAllTextAsync(path);
                     }
 
+                    if (req.Url.AbsolutePath.StartsWith("/images/"))
+                    {
+                        string fileName = req.Url.AbsolutePath.Replace("/images/", "");
+                        string fullPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "images", fileName);
+
+                        if (File.Exists(fullPath))
+                        {
+                            byte[] imgBytes = await File.ReadAllBytesAsync(fullPath);
+
+                            res.ContentType = "image/" + Path.GetExtension(fullPath).Replace(".", "");
+                            res.ContentLength64 = imgBytes.Length;
+
+                            await res.OutputStream.WriteAsync(imgBytes, 0, imgBytes.Length);
+                            res.Close();
+                            continue;
+                        }
+                        else
+                        {
+                            res.StatusCode = 404;
+                            res.Close();
+                            continue;
+                        }
+                    }
+
                     byte[] bytes = Encoding.UTF8.GetBytes(responseHtml);
                     res.ContentLength64 = bytes.Length;
                     res.ContentType = "text/html; charset=utf-8";
                     res.StatusCode = 200;
                     await res.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+                }
+                else if (req.HttpMethod == "POST")
+                {
+                    string body = "";
+                    using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
+                    {
+                        body = await reader.ReadToEndAsync();
+                        try
+                        {
+                            var formData = HttpUtility.ParseQueryString(body, Encoding.UTF8);
+
+                            string login = formData["login"];
+                            string password = formData["password"];
+                            string repeatPassword = formData["repeat_password"];
+                            bool isAgreed = formData["agree"] != null;
+
+                            List<string> errors = new List<string>();
+
+                            if (string.IsNullOrWhiteSpace(login) || login.Length <= 5)
+                            {
+                                errors.Add("Login must be more than 5 characters long.");
+                            }
+
+                            if (password != repeatPassword)
+                            {
+                                errors.Add("Passwords do not match.");
+                            }
+
+                            if (!isAgreed)
+                            {
+                                errors.Add("You must agree to the registration.");
+                            }
+
+                            object responseData;
+
+                            if (errors.Count == 0)
+                            {
+                                responseData = new
+                                {
+                                    name = login,
+                                    message = "Registration successful!"
+                                };
+                            }
+                            else
+                            {
+                                responseData = new
+                                {
+                                    errors = errors
+                                };
+                            }
+
+                            string jsonResponse = JsonSerializer.Serialize(responseData);
+                            byte[] buffer = Encoding.UTF8.GetBytes(jsonResponse);
+
+                            res.ContentType = "application/json; charset=utf-8";
+                            res.ContentLength64 = buffer.Length;
+
+                            using (Stream output = res.OutputStream)
+                            {
+                                output.Write(buffer, 0, buffer.Length);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
+                            Console.WriteLine(ex.Message);
+                        }
+                    }
+
                 }
                 res.Close();
             }
