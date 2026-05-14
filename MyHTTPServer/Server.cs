@@ -22,6 +22,7 @@ public class Student
     public string Surname { get; set; } = string.Empty;
     public string Group { get; set; } = string.Empty;
 
+    public Student() { }
     public Student(int id, string name, string surname, string group)
     {
         Id = id;
@@ -172,74 +173,160 @@ internal class Server
                     res.StatusCode = 200;
                     await res.OutputStream.WriteAsync(bytes, 0, bytes.Length);
                 }
+                //else if (req.HttpMethod == "POST")
+                //{
+                //    string body = "";
+                //    using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
+                //    {
+                //        body = await reader.ReadToEndAsync();
+                //        try
+                //        {
+                //            var formData = HttpUtility.ParseQueryString(body, Encoding.UTF8);
+
+                //            string login = formData["login"];
+                //            string password = formData["password"];
+                //            string repeatPassword = formData["repeat_password"];
+                //            bool isAgreed = formData["agree"] != null;
+
+                //            List<string> errors = new List<string>();
+
+                //            if (string.IsNullOrWhiteSpace(login) || login.Length <= 5)
+                //            {
+                //                errors.Add("Login must be more than 5 characters long.");
+                //            }
+
+                //            if (password != repeatPassword)
+                //            {
+                //                errors.Add("Passwords do not match.");
+                //            }
+
+                //            if (!isAgreed)
+                //            {
+                //                errors.Add("You must agree to the registration.");
+                //            }
+
+                //            object responseData;
+
+                //            if (errors.Count == 0)
+                //            {
+                //                responseData = new
+                //                {
+                //                    name = login,
+                //                    message = "Registration successful!"
+                //                };
+                //            }
+                //            else
+                //            {
+                //                responseData = new
+                //                {
+                //                    errors = errors
+                //                };
+                //            }
+
+                //            string jsonResponse = JsonSerializer.Serialize(responseData);
+                //            byte[] buffer = Encoding.UTF8.GetBytes(jsonResponse);
+
+                //            res.ContentType = "application/json; charset=utf-8";
+                //            res.ContentLength64 = buffer.Length;
+
+                //            using (Stream output = res.OutputStream)
+                //            {
+                //                output.Write(buffer, 0, buffer.Length);
+                //            }
+                //        }
+                //        catch (Exception ex)
+                //        {
+
+                //            Console.WriteLine(ex.Message);
+                //        }
+                //    }
+
+                //}
                 else if (req.HttpMethod == "POST")
                 {
-                    string body = "";
                     using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
                     {
-                        body = await reader.ReadToEndAsync();
+                        string body = await reader.ReadToEndAsync();
                         try
                         {
-                            var formData = HttpUtility.ParseQueryString(body, Encoding.UTF8);
-
-                            string login = formData["login"];
-                            string password = formData["password"];
-                            string repeatPassword = formData["repeat_password"];
-                            bool isAgreed = formData["agree"] != null;
-
-                            List<string> errors = new List<string>();
-
-                            if (string.IsNullOrWhiteSpace(login) || login.Length <= 5)
+                            if (req.Url.AbsolutePath == "/student")
                             {
-                                errors.Add("Login must be more than 5 characters long.");
-                            }
-
-                            if (password != repeatPassword)
-                            {
-                                errors.Add("Passwords do not match.");
-                            }
-
-                            if (!isAgreed)
-                            {
-                                errors.Add("You must agree to the registration.");
-                            }
-
-                            object responseData;
-
-                            if (errors.Count == 0)
-                            {
-                                responseData = new
+                                var newStudent = JsonSerializer.Deserialize<Student>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                                if (newStudent != null)
                                 {
-                                    name = login,
-                                    message = "Registration successful!"
-                                };
+                                    newStudent.Id = students.Max(s => s.Id) + 1;
+                                    students.Add(newStudent);
+
+                                    res.StatusCode = 201;
+                                    byte[] buffer = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(newStudent));
+                                    res.ContentType = "application/json; charset=utf-8";
+                                    await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                                }
                             }
                             else
                             {
-                                responseData = new
-                                {
-                                    errors = errors
-                                };
-                            }
+                                var formData = HttpUtility.ParseQueryString(body, Encoding.UTF8);
+                                string login = formData["login"];
+                                string password = formData["password"];
+                                string repeatPassword = formData["repeat_password"];
+                                bool isAgreed = formData["agree"] != null;
 
-                            string jsonResponse = JsonSerializer.Serialize(responseData);
-                            byte[] buffer = Encoding.UTF8.GetBytes(jsonResponse);
+                                List<string> errors = new List<string>();
+                                if (string.IsNullOrWhiteSpace(login) || login.Length <= 5) errors.Add("Login too short.");
+                                if (password != repeatPassword) errors.Add("Passwords do not match.");
+                                if (!isAgreed) errors.Add("Consent required.");
 
-                            res.ContentType = "application/json; charset=utf-8";
-                            res.ContentLength64 = buffer.Length;
+                                res.StatusCode = errors.Count == 0 ? 200 : 400;
+                                var responseData = errors.Count == 0
+                                    ? (object)new { name = login, message = "Registration successful!" }
+                                    : new { errors };
 
-                            using (Stream output = res.OutputStream)
-                            {
-                                output.Write(buffer, 0, buffer.Length);
+                                string jsonResponse = JsonSerializer.Serialize(responseData);
+                                byte[] buffer = Encoding.UTF8.GetBytes(jsonResponse);
+                                res.ContentType = "application/json; charset=utf-8";
+                                await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
                             }
                         }
                         catch (Exception ex)
                         {
-
                             Console.WriteLine(ex.Message);
+                            res.StatusCode = 500;
                         }
                     }
+                }
+                else if (req.HttpMethod == "PUT")
+                {
+                    if (req.Url.AbsolutePath.StartsWith("/student/"))
+                    {
+                        string idStr = req.Url.AbsolutePath.Replace("/student/", "");
+                        if (int.TryParse(idStr, out int id))
+                        {
+                            var student = students.FirstOrDefault(s => s.Id == id);
+                            if (student != null)
+                            {
+                                using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
+                                {
+                                    string body = await reader.ReadToEndAsync();
+                                    var updated = JsonSerializer.Deserialize<Student>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                                    if (updated != null)
+                                    {
+                                        student.Name = updated.Name;
+                                        student.Surname = updated.Surname;
+                                        student.Group = updated.Group;
 
+                                        res.StatusCode = 200;
+                                        byte[] buffer = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(student));
+                                        res.ContentType = "application/json; charset=utf-8";
+                                        await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                res.StatusCode = 404;
+                            }
+                        }
+                    }
                 }
                 res.Close();
             }
