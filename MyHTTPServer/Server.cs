@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Net;
-using System.Text.Json;
-using System.Linq;
 using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using System.Text;
+using System.Text.Json;
 using System.Web;
 
 namespace MyHTTPServer;
@@ -173,75 +174,6 @@ internal class Server
                     res.StatusCode = 200;
                     await res.OutputStream.WriteAsync(bytes, 0, bytes.Length);
                 }
-                //else if (req.HttpMethod == "POST")
-                //{
-                //    string body = "";
-                //    using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
-                //    {
-                //        body = await reader.ReadToEndAsync();
-                //        try
-                //        {
-                //            var formData = HttpUtility.ParseQueryString(body, Encoding.UTF8);
-
-                //            string login = formData["login"];
-                //            string password = formData["password"];
-                //            string repeatPassword = formData["repeat_password"];
-                //            bool isAgreed = formData["agree"] != null;
-
-                //            List<string> errors = new List<string>();
-
-                //            if (string.IsNullOrWhiteSpace(login) || login.Length <= 5)
-                //            {
-                //                errors.Add("Login must be more than 5 characters long.");
-                //            }
-
-                //            if (password != repeatPassword)
-                //            {
-                //                errors.Add("Passwords do not match.");
-                //            }
-
-                //            if (!isAgreed)
-                //            {
-                //                errors.Add("You must agree to the registration.");
-                //            }
-
-                //            object responseData;
-
-                //            if (errors.Count == 0)
-                //            {
-                //                responseData = new
-                //                {
-                //                    name = login,
-                //                    message = "Registration successful!"
-                //                };
-                //            }
-                //            else
-                //            {
-                //                responseData = new
-                //                {
-                //                    errors = errors
-                //                };
-                //            }
-
-                //            string jsonResponse = JsonSerializer.Serialize(responseData);
-                //            byte[] buffer = Encoding.UTF8.GetBytes(jsonResponse);
-
-                //            res.ContentType = "application/json; charset=utf-8";
-                //            res.ContentLength64 = buffer.Length;
-
-                //            using (Stream output = res.OutputStream)
-                //            {
-                //                output.Write(buffer, 0, buffer.Length);
-                //            }
-                //        }
-                //        catch (Exception ex)
-                //        {
-
-                //            Console.WriteLine(ex.Message);
-                //        }
-                //    }
-
-                //}
                 else if (req.HttpMethod == "POST")
                 {
                     using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
@@ -269,22 +201,43 @@ internal class Server
                                 string login = formData["login"];
                                 string password = formData["password"];
                                 string repeatPassword = formData["repeat_password"];
+                                string email = formData["email"];
                                 bool isAgreed = formData["agree"] != null;
 
                                 List<string> errors = new List<string>();
-                                if (string.IsNullOrWhiteSpace(login) || login.Length <= 5) errors.Add("Login too short.");
-                                if (password != repeatPassword) errors.Add("Passwords do not match.");
-                                if (!isAgreed) errors.Add("Consent required.");
 
-                                res.StatusCode = errors.Count == 0 ? 200 : 400;
-                                var responseData = errors.Count == 0
-                                    ? (object)new { name = login, message = "Registration successful!" }
-                                    : new { errors };
+                                if (string.IsNullOrWhiteSpace(login) || login.Length <= 5)
+                                    errors.Add("Login too short.");
 
-                                string jsonResponse = JsonSerializer.Serialize(responseData);
-                                byte[] buffer = Encoding.UTF8.GetBytes(jsonResponse);
-                                res.ContentType = "application/json; charset=utf-8";
-                                await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                                if (password != repeatPassword)
+                                    errors.Add("Passwords do not match.");
+
+                                if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
+                                    errors.Add("Invalid email.");
+
+                                if (!isAgreed)
+                                    errors.Add("Consent required.");
+
+                                if (errors.Count == 0)
+                                {
+                                    SendEmail(email, login);
+
+                                    res.StatusCode = 200;
+                                    var responseData = new { name = login, message = "Registration successful!" };
+                                    string jsonResponse = JsonSerializer.Serialize(responseData);
+                                    byte[] buffer = Encoding.UTF8.GetBytes(jsonResponse);
+                                    res.ContentType = "application/json; charset=utf-8";
+                                    await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                                }
+                                else
+                                {
+                                    res.StatusCode = 400;
+                                    var responseData = new { errors };
+                                    string jsonResponse = JsonSerializer.Serialize(responseData);
+                                    byte[] buffer = Encoding.UTF8.GetBytes(jsonResponse);
+                                    res.ContentType = "application/json; charset=utf-8";
+                                    await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -347,4 +300,27 @@ internal class Server
             _ => "notfound.html"
         };
     }
+    private void SendEmail(string toEmail, string login)
+    {
+        try
+        {
+            MailMessage mail = new MailMessage();
+            mail.From = new MailAddress("yourmail@gmail.com");
+            mail.To.Add(toEmail);
+            mail.Subject = "Registration Successful";
+            mail.Body = $"Hello, {login}! Your registration was successful.";
+
+            SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587);
+            smtp.Credentials = new NetworkCredential("yourmail@gmail.com", "APP_PASSWORD");
+            smtp.EnableSsl = true;
+
+            smtp.Send(mail);
+            Console.WriteLine($"Email sent to {toEmail}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Email error: " + ex.Message);
+        }
+    }
+
 }
